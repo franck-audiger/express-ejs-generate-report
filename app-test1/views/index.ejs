@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Test Express & EJS</title>
+</head>
+
+<body>
+    <h1>Bonjour et bienvenue à l'Accueil !</h1>
+    <a href="/assets/exemple.txt" download="exemple.txt">Télécharger fichier d'exemple</a>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="fileUpload" id="fileUpload" />
+        <button type="button" onclick="generateReport()">Générer rapport</button>
+        <p id="errorMessage" style="color: red; display: none;"></p>
+    </form>
+
+    <script>
+        function logError(message) {
+            var errorMessage = document.getElementById('errorMessage');
+            errorMessage.style.display = 'block';
+            errorMessage.textContent = message;
+            // Masquer le message d'erreur après 5 secondes
+            setTimeout(function () {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        }
+
+        function generateReport() {
+            // Récupérer le fichier
+            var fileInput = document.getElementById('fileUpload');
+            var file = fileInput.files[0];
+
+            // Vérifier si un fichier est sélectionné
+            if (!file) {
+                logError('Veuillez sélectionner un fichier.');
+                return;
+            }
+
+            // Créer un objet FormData pour envoyer le fichier
+            var formData = new FormData();
+            formData.append('fileUpload', file);
+
+            // Envoyer les données du formulaire au backend via une requête AJAX
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/generateReport', true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    // Télécharger le rapport généré en tant que fichier
+                    var blob = new Blob([xhr.response], { type: 'application/octet-stream' });
+                    var link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'rapport.csv';
+                    link.click();
+                } else if(xhr.status === 500){
+                    console.error('Erreur lors de la génération du rapport.');
+                    logError('Erreur lors de la génération du rapport.');
+                }
+            };
+            xhr.responseType = 'blob'; // La réponse est attendue sous forme de blob (fichier)
+            xhr.send(formData);
+        }
+    </script>
+</body>
+
+</html>
